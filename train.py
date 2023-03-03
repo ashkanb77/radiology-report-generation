@@ -10,6 +10,7 @@ from torch.optim import AdamW
 from transformers import get_linear_schedule_with_warmup
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
+from torch.cuda.amp import autocast
 import time
 import gc
 import os
@@ -28,8 +29,17 @@ parser.add_argument('--checkpoint_dir', type=str, default='checkpoint', help='ch
 parser.add_argument('--reports_dir', type=str, default='ecgen-radiology', help='reports directory')
 parser.add_argument('--images_dir', type=str, default='images', help='images directory')
 parser.add_argument('--resume_training_dir', type=str, default=None, help='dataset directory')
+parser.add_argument('--dtype', type=str, default='float32', help='floating point')
 
 args = parser.parse_args()
+
+if args.dtype == 'bfloat16':
+    dtype = torch.bfloat16
+elif args.dtype == 'float16':
+    dtype = torch.float16
+else:
+    dtype = torch.float32
+
 
 experiment = str(int(time.time()))
 dir = os.path.join(args.checkpoint_dir, experiment)
@@ -84,11 +94,12 @@ def train_epoch():
             input_ids = batch['input_ids'].to(device)
             pixel_values = batch['pixel_values'].to(device)
 
-            output = model(
-                input_ids=input_ids,
-                pixel_values=pixel_values,
-                labels=input_ids
-            )
+            with autocast(dtype=dtype):
+                output = model(
+                    input_ids=input_ids,
+                    pixel_values=pixel_values,
+                    labels=input_ids
+                )
 
             loss = output['loss']
             mini_loss += loss.item()
