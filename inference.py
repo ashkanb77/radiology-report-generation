@@ -22,7 +22,7 @@ processor = AutoProcessor.from_pretrained(args.processor)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-model = CaptioningModule(args.model_name)
+model = CaptioningModule(args.model_path)
 model.to(device)
 
 gc.collect()

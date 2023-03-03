@@ -1,5 +1,4 @@
 from torch.utils.data import Dataset
-import os
 from PIL import Image
 
 
@@ -12,7 +11,6 @@ class ImageCaptioningDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        image_path = os.path.join('images', self.images[idx] + '.png')
-        image = Image.open(image_path)
+        image = Image.open(self.images[idx])
         report = self.reports[idx]
         return image, report

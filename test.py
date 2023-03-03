@@ -36,9 +36,9 @@ model.to(device)
 rouge = Rouge()
 
 
-def generate_compute(input_ids, pixel_values):
+def generate_compute(pixel_values):
 
-    generated_ids = model.generate(pixel_values=pixel_values, max_length=150)
+    generated_ids = model.model.generate(pixel_values=pixel_values, max_length=150)
     generated_captions = processor.batch_decode(generated_ids, skip_special_tokens=True)
     ground_truth_captions = processor.batch_decode(generated_ids, skip_special_tokens=True)
 
@@ -86,7 +86,6 @@ with tqdm(val_dataloader, unit="batch") as tepoch:
         tepoch.set_description(f"Validation")
 
         generated_captions, ground_truth_captions, rouge_output = generate_compute(
-            input_ids=batch['input_ids'].to(device),
             pixel_values=batch['pixel_values'].to(device)
         )
 

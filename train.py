@@ -66,7 +66,7 @@ val_dataloader = DataLoader(
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-model = CaptioningModule(args.model_name)
+model = CaptioningModule(args.model_path)
 model.to(device)
 
 # training config: optimizer, scheduler and criterion
@@ -74,7 +74,7 @@ optimizer = AdamW(model.parameters(), lr=args.learning_rate)
 
 scheduler = get_linear_schedule_with_warmup(
     optimizer, num_warmup_steps=0,
-    num_training_steps=args.epochs, verbose=True
+    num_training_steps=args.epochs
 )
 
 acc_steps = args.batch_size // args.mini_batch_size
@@ -98,7 +98,6 @@ def train_epoch():
                 output = model(
                     input_ids=input_ids,
                     pixel_values=pixel_values,
-                    labels=input_ids
                 )
 
             loss = output['loss']
@@ -135,7 +134,6 @@ def eval_model():
                 output = model(
                     input_ids=input_ids,
                     pixel_values=pixel_values,
-                    labels=input_ids
                 )
 
                 loss = output['loss']
