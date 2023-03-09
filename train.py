@@ -7,7 +7,7 @@ from model import CaptioningModule
 from torch.utils.data import DataLoader
 from transformers import AutoProcessor
 from torch.optim import AdamW
-from transformers import get_linear_schedule_with_warmup
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 from torch.cuda.amp import autocast
@@ -72,10 +72,7 @@ model.to(device)
 # training config: optimizer, scheduler and criterion
 optimizer = AdamW(model.parameters(), lr=args.learning_rate)
 
-scheduler = get_linear_schedule_with_warmup(
-    optimizer, num_warmup_steps=0,
-    num_training_steps=args.epochs
-)
+scheduler = ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=4, verbose=True)
 
 acc_steps = args.batch_size // args.mini_batch_size
 scaler = torch.cuda.amp.GradScaler()
@@ -112,7 +109,7 @@ def train_epoch():
 
             tepoch.set_postfix(loss=loss.item())
 
-    scheduler.step()
+
     loss = np.mean(losses)
 
     writer.add_scalar('Loss/train', loss, epoch)
@@ -133,7 +130,7 @@ def eval_model():
 
                 output = model(
                     input_ids=input_ids,
-                    pixel_values=pixel_values,
+                    pixel_values=pixel_values
                 )
 
                 loss = output['loss']
@@ -143,6 +140,7 @@ def eval_model():
 
         loss = np.mean(losses)
         writer.add_scalar('Loss/validation', loss, epoch)
+        scheduler.step(loss)
         return loss
 
 
